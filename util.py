@@ -16,9 +16,19 @@ def load_data(path_name, n_signal=None, n_background=None):
     return data_signal, data_background
 
 def normalize(data_signal, data_background):
-    data_total = np.concatenate((data_background, data_signal), axis=0)
-    data_background = (data_background - np.mean(data_total, axis=0))/np.std(data_total, axis=0)
-    data_signal = (data_signal - np.mean(data_total, axis=0))/np.std(data_total, axis=0)
+    data_min = np.min(data_signal, axis=0), np.min(data_background, axis=0)
+    min_pt, min_e_miss = min(data_min[0][0], data_min[1][0]), min(data_min[0][1], data_min[1][1])
+    data_max = np.max(data_signal, axis=0), np.max(data_background, axis=0)
+    max_pt, max_e_miss = max(data_max[0][0], data_max[1][0]), max(data_max[0][1], data_max[1][1])
+    data_signal[:, 0] -= min_pt
+    data_signal[:, 1] -= min_e_miss
+    data_background[:, 0] -= min_pt
+    data_background[:, 1] -= min_e_miss
+
+    data_signal[:, 0] /= (max_pt - min_pt)/np.pi
+    data_signal[:, 1] /= (max_e_miss - min_e_miss)/np.pi
+    data_background[:, 0] /= (max_pt - min_pt)/np.pi
+    data_background[:, 1] /= (max_e_miss - min_e_miss)/np.pi
     return data_signal, data_background
 
 
@@ -36,3 +46,10 @@ def cost(v, model, X, Y):
 
 def loss(y, out):
     return np.mean((y - out)**2)
+
+def cost_gaussian(v, model, X, Y):
+    out, jacobian = np.array([model(x, v[0], v[1]) for x in X])
+    return gaussian_loss(out, jacobian)
+
+def gaussian_loss(out, jacobian):
+    return np.mean(out**2)/2 - np.mean(np.log(jacobian))/out.shape[1]
