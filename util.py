@@ -40,7 +40,7 @@ def split_data(data_signal, data_background, test_rat=0.2, train_rat=0.8):
     return data_train, labels_train, data_val, labels_val
 
 def cost(v, model, X, Y):
-    out = np.array([model(x, v[0], v[1]) for x in X])
+    out = np.squeeze(np.array([model(x, v[0], v[1]) for x in X]))
     return loss(Y, out)
 
 

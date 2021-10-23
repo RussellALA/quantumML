@@ -132,5 +132,5 @@ dmypy.json
 # Model Data
 data/
 params/
-models/
+outputs/
 plots/

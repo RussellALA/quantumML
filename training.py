@@ -15,7 +15,7 @@ def validate(valloader, model):
 def accuracy(valloader, model):
     acc = 0.0
     for x, y in valloader:
-        out = np.array([model(data) for data in x])
+        out = np.squeeze(np.array([model(data) for data in x]))
         acc += np.sum(np.sign(y) == np.sign(out))/(len(valloader)*x.shape[0])
     return acc
 
@@ -33,14 +33,17 @@ def pad(array):
     ret[-1][-1] = 1
     return ret
 
-def train(trainloader, valloader, model, opt, n_epochs, data_store, device):
+def train(trainloader, valloader, model, opt, data_store, device, params):
     data_store["loss"] = []
     data_store["accuracy"] = []
-    for epoch in trange(n_epochs):
+    for epoch in trange(params.get("n_epochs", 5)):
         train_loss = 0
         for i, (x, y) in enumerate(tqdm(trainloader, leave=False)):
-            metric_tensor = lambda parameters: pad(qml.metric_tensor(pin_x(x, model.circuit, device))(parameters[0]))
-            new_var, batch_loss = opt.step_and_cost(lambda v: cost(v, model, x, y), model.var(), metric_tensor_fn=metric_tensor)
+            if params.get("optim_type") == "Quantum":
+                metric_tensor = lambda parameters: pad(qml.metric_tensor(pin_x(x, model.circuit, device))(parameters[0]))
+                new_var, batch_loss = opt.step_and_cost(lambda v: cost(v, model, x, y), model.var(), metric_tensor_fn=metric_tensor)
+            else:
+                new_var, batch_loss = opt.step_and_cost(lambda v: cost(v, model, x, y), model.var())
             model.update(new_var)
             train_loss += batch_loss/len(trainloader)
         tqdm.write(f"Train loss in epoch {epoch}: {train_loss}")

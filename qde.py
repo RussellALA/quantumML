@@ -22,7 +22,7 @@ def circuit(x, parameters):
     #For measurement apply Pauli-Z to first qubit
     return qml.expval(qml.PauliZ(wires=0))
 
-class InvertibleModel(Model):
+class IQNN(VQC):
     def __init__(self, circuit, inverse_circuit, params):
         super().__init__()
         self.bias1 = np.zeros(self.n_features)
@@ -53,15 +53,17 @@ class InvertibleModel(Model):
     def var(self):
         return self.parameters, self.bias1, self.bias2
 
+
     def save(self):
-        os.makedirs("models", exist_ok=True)
-        np.savez(os.path.join("models", self.modelname),
+        os.makedirs("outputs", exist_ok=True)
+        os.makedirs(os.path.join("outputs", self.modelname), exist_ok=True)
+        np.savez(os.path.join("models", self.modelname, "model"),
                 parameters=self.parameters,
                 bias1=self.bias1,
                 bias2=self.bias2)
 
     def load(self, path):
-        modeldata = np.load(path)
+        modeldata = np.load(path, allow_pickle=True)
         self.parameters = modeldata["parameters"]
         self.bias1 = modeldata["bias1"]
         self.bias2 = modeldata["bias2"]

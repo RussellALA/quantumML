@@ -43,7 +43,7 @@ def pin_x(x, circuit, device):
 
     return qml.QNode(lambda parameters: clone_circuit(x, parameters), device)
 
-class Model:
+class VQC:
     def __init__(self, circuit, params):
         self.n_features = params["dim_x"]
         self.n_layers = params.get("n_layers", 2)
@@ -71,10 +71,11 @@ class Model:
         return self.parameters, self.bias
 
     def save(self):
-        os.makedirs("models", exist_ok=True)
-        np.savez(os.path.join("models", self.modelname), parameters=self.parameters, bias=self.bias)
+        os.makedirs("outputs", exist_ok=True)
+        os.makedirs(os.path.join("outputs", self.modelname), exist_ok=True)
+        np.savez(os.path.join("outputs", self.modelname, "model"), parameters=self.parameters, bias=self.bias)
 
     def load(self, path):
-        modeldata = np.load(path)
+        modeldata = np.load(path, allow_pickle=True)
         self.parameters = modeldata["parameters"]
         self.bias = modeldata["bias"]
